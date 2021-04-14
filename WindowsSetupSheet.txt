@@ -1,0 +1,47 @@
+1. Get WSL2 on Windows
+2. Get a normal distro (Ubuntu or Debian work fine)
+
+    // Plutus container running in docker
+
+1. In your wsl shell, in your linux ~/src (for example) do:
+
+    git clone https://github.com/input-output-hk/plutus
+
+2. Read the README file it will tell you how to get Nix
+3. Install Nix
+
+    curl -L https://nixos.org/nix/install | sh
+
+4. Configure nix by adding the file /etc/nix/nix.conf (relaunch your shell)
+
+    sandbox = false
+    use-sqlite-wal = false
+    substituters        = https://hydra.iohk.io https://iohk.cachix.org https://cache.nixos.org/
+    trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= iohk.cachix.org-1:DpRUyj7h7V830dp/i6Nti+NEO2/nhblbov/8MW7Rqoo= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+
+5. Build Plutus with the Nix command line in the README file
+
+   nix build -f default.nix plutus.haskell.packages.plutus-core.components.library
+
+6. Install Docker for Windows (relaunch your shell)
+7. Launch Docker and make sure it is WSL2 enabled (in the settings)
+8. Launch the Docker container from WSL using the README command line
+
+    docker load < $(nix-build default.nix -A devcontainer)
+
+    // VSCode
+
+References:
+https://code.visualstudio.com/docs/remote/wsl#_advanced-opening-a-wsl-2-folder-in-a-container
+
+1. Get VSCode for Windows
+2. Get the Remote - Containers extension
+3. Go back into WSL into your source directory (~/src , maybe)
+4. git clone https://github.com/input-output-hk/plutus-starter
+5. cd plutus-starter
+6. code .       // <-- this will install VSCode Server on your linux, wait for it
+                // somehow I had to shutdown my vpn for that to download, should
+                // not take long at all. :)
+7. VSCode will launch in Windows and ask to reopen in the Dev Container: yes.
+8. Open the CLI you will get a nifty [nix]: CLI
+9. 'cabal update' then 'cabal build' and watch it build the Haskell
