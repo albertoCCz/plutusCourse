@@ -30,7 +30,7 @@ As we can see, we have implemented some simple logic for the redeemer. Now, we f
 
 To translate this validator Haskell function to an actual Plutus validator , we need to compile it. Then it will actually be of type _Validator_. To this end we use the function `mkValidatorScript`, which takes as an argument something of type _CompiledCode_ of `(Data -> Data -> Data -> ())`. As an example:
 
-```
+```haskell
 validator :: Validator
 validator = mkValidatorScript $$(PlutusTx.compile [|| mkValidator ||])
 ```
