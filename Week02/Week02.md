@@ -64,7 +64,7 @@ mkValidator () r _
 	| r == 42   = True
     	| otherwise = False
 ```
-The Datum and Redeemer types _Unit_ and _Integer_, respectively, are the custom ones, while the Context _ValidatorCtx_ and the _Bool_ types are the ones will usually use in most cases. As this is the case, the Plutus team has take care of it and the only adjustments we need to do are those related with the Datum and the Redeemer. This is because, as we have already see, the compiler expect a validator of type `Data -> Data -> Data -> ()`, so we must add some code to do the trick. This code, which is also boiler plate, reads:
+The Datum and Redeemer types _Unit_ and _Integer_, respectively, are the custom ones, while the Context _ValidatorCtx_ and the _Bool_ types are the ones will usually use in most cases. As this is the case, the Plutus team has take care of it and the only adjustments we need to do are those related with the Datum and the Redeemer. This is because, as we have already seen, the compiler expects a validator of type `Data -> Data -> Data -> ()`, so we must add some code to do the trick. This code, which is also boiler plate, reads:
 
 ```haskell
 data Typed
@@ -88,7 +88,7 @@ and we just need to change a bit the validator function to convert this compiled
 
 ```haskell
 validator :: Validator
-validator = Script.validatorScript inst
+validator = Scripts.validatorScript inst
 ```
 
 As we can see we have just passed `inst` to a knew function called `validatorScript` from module `Script` without the need to compile it, as we already did it on the previous piece of code.
