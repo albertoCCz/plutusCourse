@@ -88,7 +88,7 @@ inst = Scripts.validator @Typed
     wrap = Scripts.wrapValidator @() @Integer
 ```
 
-and we just need to change a bit the validator function to convert this compiled code to a _Validator_ type object:
+One thing worth mentioning here is the last line of code. When defining `wrap` you use the function `wrapValidator` from module `Scripts` and you pass it the _custom_ data types you used in the validator function (and preceded by `@`) as parameters. In this case, those data types were the `Unit` type for _Datum_ and the `Integer` type for the _Redeemer_. Then, we just need to change a bit the validator function to convert this compiled code to a _Validator_ type object:
 
 ```haskell
 validator :: Validator
@@ -100,10 +100,10 @@ As we can see we have just passed `inst` to a knew function called `validatorScr
 In principle, the data types we can successfully use when defining the validator are those defined as instances of the [isData class](https://github.com/input-output-hk/plutus/blob/master/plutus-tx/src/PlutusTx/IsData/Class.hs). This is due to the fact that is this class the one in charge to convert our custom data types in objects of _Data_ type. It do so be means of the methods `toData` and `fromData`. Anyway, if we want to use different data types from those instantiated in the referred link, we just need to define this instances. But this might be a very tedious process, so Plutus give us a convenient way to do it easily. For example, if we want to use some custom data type `fabulousRedeemerType`, we just have to add on top of our validator function these lines:
 
 ```haskell
-newtype fabulousRedeemerType =  fabulousRedeemerType Integer
+newtype fabulousRedeemerType = fabulousRedeemerType Integer
 	deriving Show
 
 PlutusTx.unstableMakeIsData ''fabulousRedeemerType
 ```
 
-The first two lines define my type while in the forth one we pass this type to the helper function `unstableMakeIsData` as its argument, for which use two single quotes, and end up having instantiated our new type.
+The first two lines define my type while in the fourth one we pass this type to the helper function `unstableMakeIsData` as its argument, for which we use two single quotes, and end up having instantiated our new type.
