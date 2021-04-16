@@ -18,7 +18,7 @@ This Validator will always accept any transaction, because no matter what argume
 mkValidator :: Data -> Data -> Data -> ()
 mkValidator _ r _
 	| r == I 42 = ()
-    | otherwise = traceError "wrong redeemer"
+    	| otherwise = traceError "wrong redeemer"
 ```
 
 (This won't probably match anyone's business requirements, but it is bit more complex than the previous one ;))
