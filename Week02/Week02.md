@@ -1,5 +1,9 @@
 # Week02
 
+### Credits
+
+[Alberto Calzada - albertoCCz](https://github.com/albertoCCz)
+
 ## Validator
 The _Validator_ is a function that takes three arguments, _Datum_, _Redeemer_ and _Context_, which are of type _Data_, and returns the _Unit_ type (which reads () on Haskell) or a _Bool_ type (maybe others, although I think it would make no sense). As an example:
 
@@ -14,7 +18,7 @@ This Validator will always accept any transaction, because no matter what argume
 mkValidator :: Data -> Data -> Data -> ()
 mkValidator _ r _
 	| r == I 42 = ()
-    	| otherwise = traceError "wrong redeemer"
+    | otherwise = traceError "wrong redeemer"
 ```
 
 (This won't probably match anyone's business requirements, but it is bit more complex than the previous one ;))
@@ -62,15 +66,15 @@ It is possible to substitute the _Data_ type arguments of the validator by more 
 mkValidator :: () -> Integer -> ValidatorCtx -> Bool
 mkValidator () r _
 	| r == 42   = True
-    	| otherwise = False
+    | otherwise = False
 ```
 The Datum and Redeemer types _Unit_ and _Integer_, respectively, are the custom ones, while the Context _ValidatorCtx_ and the _Bool_ types are the ones will usually use in most cases. As this is the case, the Plutus team has take care of it and the only adjustments we need to do are those related with the Datum and the Redeemer. This is because, as we have already seen, the compiler expects a validator of type `Data -> Data -> Data -> ()`, so we must add some code to do the trick. This code, which is also boiler plate, reads:
 
 ```haskell
 data Typed
 instance Scripts.ScriptType Typed where
-	type instance DatumType Type = ()
-    	type instance RedeemerType Type = Integer
+	type instance DatumType Typed    = ()
+    type instance RedeemerType Typed = Integer
 ```
 
 To compile this typed version of the validator we, again, have to make use of some boiler plate code. I don't understand this code very well, so I'll just copy-paste it:
