@@ -13,7 +13,7 @@
 
 
 # The Context
-(Reference: [Contexts.hs](https://github.com/input-output-hk/plutus/blob/master/plutus-ledger-api/src/Plutus/V1/Ledger/Contexts.hs))
+(References: [Contexts.hs](https://github.com/input-output-hk/plutus/blob/master/plutus-ledger-api/src/Plutus/V1/Ledger/Contexts.hs), [`Tx.hs`](https://github.com/input-output-hk/plutus/blob/master/plutus-ledger-api/src/Plutus/V1/Ledger/Tx.hs))
 
 As we have already seen, the Context, which plays a central role in the _EUTXO model_, is the third argument for the validator function. The data type of this argument has now changed to be `ScriptContext`, which is defined like follows:
 ```haskell
@@ -59,16 +59,22 @@ We see that this data type has many fields, which are global to the transaction.
 txInfoInputs  :: [TxInInfo] -- ^ Transaction inputs
 txInfoOutputs :: [TxOut] -- ^ Transaction outputs
 ```
-For those of you who want to go deeper, you can find the definition of the data type `TxInInfo` in the same module `Contexts.hs` and the definiton of the data type `TxOut` at the module [`Tx.hs`](https://github.com/input-output-hk/plutus/blob/master/plutus-ledger-api/src/Plutus/V1/Ledger/Tx.hs). In the end, the fields on the definition of `TxInInfo` also depend on data types defined on this last module, so try to check it out if you have time.
+For those of you who want to go deeper, you can find the definition of the data type `TxInInfo` in the same module `Contexts.hs` and the definiton of the data type `TxOut` at the module `Tx.hs`. In the end, the fields on the definition of `TxInInfo` also depend on data types defined on this last module, so try to check it out if you have time.
 
 Other global fields are the `txInfoFee`, for the fee paid by the transaction and the `txInfoForge`, which is related to the processes of minting and burning tokens, being non-zero in those cases. Then we have the `txInfoValidRange`, which we will be working with extensively during this lecture (so we don't need to explain it now), the `txInfoSignatories`, which is a list of all the signatures attached to the transactions, the `txInfoData`, which is a list of key-value pairs from `DatumHash` to `Datum`, being the second argument optional, and finally the field `TxInfoId`, which is just the hash of the transaction.
 
 # Handling time
-(References: [Slot.hs](https://github.com/input-output-hk/plutus/blob/master/plutus-ledger-api/src/Plutus/V1/Ledger/Slot.hs))
+(References: [Slot.hs](https://github.com/input-output-hk/plutus/blob/master/plutus-ledger-api/src/Plutus/V1/Ledger/Slot.hs), [Interval.hs](https://github.com/input-output-hk/plutus/blob/master/plutus-ledger-api/src/Plutus/V1/Ledger/Interval.hs))
+
 One of the characteristics of Plutus' smart contracts is that they behave in a deterministic way. That way, you can know if a transaction will be validated before you submit it to a node from your wallet. Obviously the transaction could still fail because the output was consumed by the moment your transaction has to be validated, but let's leave it aside for now. But it might be difficult to put together this deterministic behaviour with the fact time is always passing. But, why might it be difficult? Well, it could be the case you want to make a transaction that have a deadeline so you try it in your wallet and it validates, because you do it on time, but then you submit it to the node and when it has to be validated the time is beyond the deadline. This can't be allowed if we want a deterministic behaviour, so here is when the `txInfoValidRange` field from the `TxInfo`data type comes into play.
 
-The solution Plutus team has found for this apparently paradox is to include, with the transaction, a time range for which it is acceptable for the submitter to be validated. When the node receives the transaction, and before any validation is carried out (which would incurre in fees), it checks if the current time is included in the time range the submitter set. If it is, the validation is carried out and if it isn't, the validation is not executed so no fees are spent. The data type of the `txInfoValidRange` is `SlotRange`, which represents this time range. This data type is defined on the module `Slot.hs` as:
+The solution the Plutus team has found for this apparent paradox is to include, with the transaction, a time range for which it is acceptable for the submitter that the transaction is validated. When the node receives the transaction, and before any validation is carried out (which would incurre in fees), it checks if the current time, or Slot, is included in the time range the submitter set. If it is, the validation is carried out and if it isn't, the validation is not executed so no fees are spent. The data type of the `txInfoValidRange` is `SlotRange`, which represents this time range we are talking about. This data type is defined on the module `Slot.hs` as:
 ```haskell
 type SlotRange = Interval Slot
 ```
-so we can see it is just an `Interval` of `Slot`.
+so we can see it is just an `Interval` of `Slot`. But, what are these? Well, the `Interval` is a data type build from an _lower bound_ and an _upper bound_, which may be or not included included in the interval. It's not only designed to work with Slots, being its definition more general, although it's very useful to work with them. This definiton, which can be found at module `Interval.hs`, is:
+```haskell
+data Interval a = Interval { ivFrom :: LowerBound a, ivTo :: UpperBound a }
+    deriving stock (Haskell.Eq, Haskell.Ord, Show, Generic)
+    deriving anyclass (FromJSON, ToJSON, Serialise, Hashable, NFData)
+```
