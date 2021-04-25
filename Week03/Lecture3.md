@@ -37,7 +37,7 @@ The most important one for us, at least during this course, will be the `Spendin
 (The other two types where not properly explained, as they are brand new and they won't be used in this course, soon at least)
 
 ### The `TxInfo`
-The `TxInfo` is what really describes the spending transaction. Again, its definition is in the link, but let us take a look at its definition:
+The `TxInfo` is what really describes the pending transaction. Again, its definition is in the link, but let us take a look at it:
 ```haskell
 data TxInfo = TxInfo
     { txInfoInputs      :: [TxInInfo] -- ^ Transaction inputs
@@ -54,8 +54,11 @@ data TxInfo = TxInfo
     -- ^ Hash of the pending transaction (excluding witnesses)
     } deriving (Generic)
 ```
+We see that this data type has many fields, some of which are global to the transaction. The first and third fields, `txInfoInputs` and `txInfoOutputs` respectively, are particular examples of global fields. They are a list of all the inputs and outputs of the given transaction:
+```haskell
+txInfoInputs  :: [TxInInfo] -- ^ Transaction inputs
+txInfoOutputs :: [TxOut] -- ^ Transaction outputs
+```
+For those of you who want to go deeper, you can find the definition of the data type `TxInInfo` in the same module `Contexts.hs` and the definiton of the data type `TxOut` at the module [`Tx.hs`](https://github.com/input-output-hk/plutus/blob/master/plutus-ledger-api/src/Plutus/V1/Ledger/Tx.hs). In the end, the fields on the definition of `TxInInfo` also depend on data types defined on this last module, so try to check it out if you have time.
 
-
-
-
-
+Other global fields are the `txInfoFee`, for the fee paid by the transaction and the `txInfoForge`, which is related to the processes of minting and burning tokens, being non-zero in those cases. Then we have the `txInfoValidRange`, which we will be working with extensively during this lecture (so we don't need to explain it now), the `txInfoSignatories`, which is a list of all the signatures attached to the transactions, the `txInfoData`, which is a list of key values pairs from `DatumHash` to `Datum`, being the second argument optional, and finally the field `TxInfoId`, which is just the transaction id.
