@@ -15,7 +15,7 @@
 # The Context
 (Reference: [Contexts.hs](https://github.com/input-output-hk/plutus/blob/master/plutus-ledger-api/src/Plutus/V1/Ledger/Contexts.hs))
 
-As we have already seen, the Context, which plays a central role in the _EUTXO model_, is the third argument for the validator function. The data type of this argument has know changed to be `ScriptContext`, which is defined like follows:
+As we have already seen, the Context, which plays a central role in the _EUTXO model_, is the third argument for the validator function. The data type of this argument has now changed to be `ScriptContext`, which is defined like follows:
 ```haskell
 data ScriptContext = ScriptContext{scriptContextTxInfo :: TxInfo, scriptContextPurpose :: ScriptPurpose }
 ```
@@ -64,4 +64,11 @@ For those of you who want to go deeper, you can find the definition of the data 
 Other global fields are the `txInfoFee`, for the fee paid by the transaction and the `txInfoForge`, which is related to the processes of minting and burning tokens, being non-zero in those cases. Then we have the `txInfoValidRange`, which we will be working with extensively during this lecture (so we don't need to explain it now), the `txInfoSignatories`, which is a list of all the signatures attached to the transactions, the `txInfoData`, which is a list of key-value pairs from `DatumHash` to `Datum`, being the second argument optional, and finally the field `TxInfoId`, which is just the hash of the transaction.
 
 # Handling time
+(References: [Slot.hs](https://github.com/input-output-hk/plutus/blob/master/plutus-ledger-api/src/Plutus/V1/Ledger/Slot.hs))
 One of the characteristics of Plutus' smart contracts is that they behave in a deterministic way. That way, you can know if a transaction will be validated before you submit it to a node from your wallet. Obviously the transaction could still fail because the output was consumed by the moment your transaction has to be validated, but let's leave it aside for now. But it might be difficult to put together this deterministic behaviour with the fact time is always passing. But, why might it be difficult? Well, it could be the case you want to make a transaction that have a deadeline so you try it in your wallet and it validates, because you do it on time, but then you submit it to the node and when it has to be validated the time is beyond the deadline. This can't be allowed if we want a deterministic behaviour, so here is when the `txInfoValidRange` field from the `TxInfo`data type comes into play.
+
+The solution Plutus team has found for this apparently paradox is to include, with the transaction, a time range for which it is acceptable for the submitter to be validated. When the node receives the transaction, and before any validation is carried out (which would incurre in fees), it checks if the current time is included in the time range the submitter set. If it is, the validation is carried out and if it isn't, the validation is not executed so no fees are spent. The data type of the `txInfoValidRange` is `SlotRange`, which represents this time range. This data type is defined on the module `Slot.hs` as:
+```haskell
+type SlotRange = Interval Slot
+```
+so we can see it is just an `Interval` of `Slot`.
