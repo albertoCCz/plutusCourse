@@ -15,11 +15,49 @@ where:
 - s:  Describes the blockchain capabilities aka what contract specific actions this contract can perform. For example: waiting for slots, submiting transactions, finding out your own public key or specific endpoints.
 - e:  Describes the type of error messages.
 
-### Example of Contrac Monad
+### Simple example of Contract Monad
+In the next example we will just send a log message from the contract to the console, so we will be ignoring the `a` and `w` types.
 ```haskell
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications  #-}
+-- ^ Add extensions on the top of the module file
+
 myContract1 :: Contract () BlockchainActions Text ()
-myContract1 = do
-    void $ Contract.throwError "BOOM!"
-    Contract.logInfo @String "Hello from the contract!"
+myContract1 = Contract.logInfo @String "Hello from the contract!"
 ```
-As you can see, we have chosen `s` to be of type `BlockchainActions`. This data type contains the minimal set of actions for a contract: from the options given above, we will not be able to use specific endpoints. In particular, you can check what actions are avaliable in the _[Contract.hs](https://github.com/input-output-hk/plutus/blob/master/plutus-contract/src/Plutus/Contract.hs)_ module if you look for `BlockchainActions`.
+As you can see, we have chosen `s` (which I believe stands for "schema") to be of type `BlockchainActions`. This data type contains the minimal set of actions for a contract: from the options given above, we will not be able to use specific endpoints. In particular, you can check what actions are avaliable in the [Contract.hs](https://github.com/input-output-hk/plutus/blob/master/plutus-contract/src/Plutus/Contract.hs) module if you look for `BlockchainActions`.
+
+### Throwing vs caughting Errors
+
+### Custom Schemas
+We can define a custom set of contract actions by adding this actions to the `BlockchainActions` type. For example, let us say we want to add and endpoint called 'foo'. We just need to give a pseudonym to the set of action data types like this:
+```haskell
+{-# LANGUAGE DataKinds     #-}
+{-# LANGUAGE TypeOperators #-}
+-- ^ Add extensions on the top of the module file
+
+type MySchema = BlockchainActions .\/ Endpoint "foo" Int
+```
+In the last line we define the type of the set of actions and we call it `MySchema`. Then we use the operator `.\/`, which acts on types, not on values, to "add" the endpoints that we want, in this case the `foo` endpoint. The first argument to `Endpoint` is a type level string which represents the name of the endpoint, and the second argument is the parameter type (which type of value this endpoint takes).
+
+Once we have define the endpoint we can take the action defined by it using the trace emulator. First, we define our contract:
+```haskell
+myContract :: Contract () MySchema Text ()
+myContract = do
+    n <- endpoint @"foo"
+    Contract.logInfo n
+```
+This contract just waits for some wallet to call the `"foo"` endpoint with some `Int` value and then logs it to the console.
+
+Then, we define the trace of the simmulation:
+```haskell
+myTrace :: EmulatorTrace ()
+myTrace = do
+    h <- activateContractWallet (Wallet 1) myContract
+    callEndpoint @"foo" h 42
+```
+And finally we define the test funtion that runs this trace simmulation:
+```haskell
+test :: IO ()
+test = runEmulatorTraceIO myTrace
+```
