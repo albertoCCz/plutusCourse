@@ -27,7 +27,75 @@ myContract1 = Contract.logInfo @String "Hello from the contract!"
 ```
 As you can see, we have chosen `s` (which I believe stands for "schema") to be of type `BlockchainActions`. This data type contains the minimal set of actions for a contract: from the options given above, we will not be able to use specific endpoints. In particular, you can check what actions are avaliable in the [Contract.hs](https://github.com/input-output-hk/plutus/blob/master/plutus-contract/src/Plutus/Contract.hs) module if you look for `BlockchainActions`.
 
-### The Schema parameter: s
+To use this contract you first need to define the trace, which substitutes what we previouly did on the Plutus Playground by providing with a list of actions the wallet(s) associated to the contract is going to perfom. The trace function we are going to use is the next one:
+```haskell
+myTrace :: EmulatorTrace ()
+myTrace = void $ activateContractWallet (Wallet 1) myContract
+```
+This function just activates a wallet or set of wallets (Wallet 1 in this case) by associating it with a contract (myContract in this case) and normally the result, is save in a handler that we can use later. Normally, the code would look like this:
+```haskell
+myTrace :: EmulatorTrace ()
+myTrace = h <- activateContractWallet (Wallet 1) myContract
+```
+where `h` is the handler. Now, as we are just interested in showing the log message and we will not use the handler, we use the `void` keyword so the compiler does not complaint. Finally, after defining the trace, we can define one or more test(s) to study whether or not the contract works as expected. This time we only define one of these tests because, again, we are just interested in the log message. The test is:
+```haskell
+myTest :: IO ()
+myTest = runEmulatorTraceIO myTrace
+```
+Be aware of the `IO` at the end of the function `runEmulatorTraceIO`, as it also exists the funtion called `runEmulatorTrace`. The difference between them is that the first one, the one we are using in our example, shows a compact and nicely formatted message on the console when executing (also less information, though) while the second one shows pages and pages of data that needs to be processed to make it readable. 
+
+With all this, we are ready to try our first contract on the repl. To do this, I have found that the simplest way is to:
+1. Activate the `nix-shell` inside the plutus repo directory: `__@__:~/plutus$ nix-shell`
+2. Move to `plutus-pioneer-program/code/week04/` wherever you placed it.
+3. Access the repl: `cabal repl`
+4. Load the _Contract.hs_ module inside source: `:l src/Week04/Contract.hs`
+5. And executing the test: `myTest`
+
+You will be shown something like this:
+```
+Prelude Week04.Contract> test1
+Slot 00000: TxnValidate af5e6d25b5ecb26185289a03d50786b7ac4425b21849143ed7e18bcd70dc4db8
+Slot 00000: SlotAdd Slot 1
+Slot 00001: 00000000-0000-4000-8000-000000000000 {Contract instance for wallet 1}:
+  Contract instance started
+Slot 00001: *** CONTRACT LOG: "Hello from the contract!"
+Slot 00001: 00000000-0000-4000-8000-000000000000 {Contract instance for wallet 1}:
+  Contract instance stopped (no errors)
+Slot 00001: SlotAdd Slot 2
+Final balances
+Wallet 1:
+    {, ""}: 100000000
+Wallet 2:
+    {, ""}: 100000000
+Wallet 3:
+    {, ""}: 100000000
+Wallet 4:
+    {, ""}: 100000000
+Wallet 5:
+    {, ""}: 100000000
+Wallet 6:
+    {, ""}: 100000000
+Wallet 7:
+    {, ""}: 100000000
+Wallet 8:
+    {, ""}: 100000000
+Wallet 9:
+    {, ""}: 100000000
+Wallet 10:
+    {, ""}: 100000000
+```
+You can observe, at the top of the console output, the contract log message we wrote.
+
+## Throwing vs Caughting errors
+When executing a contract, as with any other piece of code, an error can happens. The behaviour of errors inside the contract monad is the expected one: the execution stops and an error message is shown in the console. To explore this a bit and to see the difference with the log message we used in our first example, let us add a line of code to it. The contract code is as follows:
+```haskell
+myContract1 :: Contract () BlockchainActions Text ()
+myContract1 = do
+    void $ Contract.throwError "BOOM!"
+    Contract.logInfo @String "Hello from the contract!"
+```
+
+## The Schema parameter: s
 We can define a custom set of contract actions by adding this actions to the `BlockchainActions` type. For example, let us say we want to add and endpoint called 'foo'. We just need to give a pseudonym to the set of action data types like this:
 ```haskell
 {-# LANGUAGE DataKinds     #-}
@@ -60,7 +128,7 @@ test :: IO ()
 test = runEmulatorTraceIO myTrace
 ```
 
-### The Writer parameter: w
+## The Writer parameter: w
 This type parameter can not be of any type but it must be an instance of the type class `Monoid`. An example of data type which is an instance of this class is `List`. This parameter of the Contract monad is essential because it allows us to bring information back from the contract to the trace and also to the _PAB_, the Plutus Application Backend. We will be able to pass info back from the contract running in the wallet to the outside world. Let us see an example:
 ```haskell
 myContract :: Contract [Int] BlockchainActions Text ()
