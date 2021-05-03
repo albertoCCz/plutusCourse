@@ -22,8 +22,8 @@ In the next example we will just send a log message from the contract to the con
 {-# LANGUAGE TypeApplications  #-}
 -- ^ Add extensions on the top of the module file
 
-myContract1 :: Contract () BlockchainActions Text ()
-myContract1 = Contract.logInfo @String "Hello from the contract!"
+myContract :: Contract () BlockchainActions Text ()
+myContract = Contract.logInfo @String "Hello from the contract!"
 ```
 As you can see, we have chosen `s` (which I believe stands for "schema") to be of type `BlockchainActions`. This data type contains the minimal set of actions for a contract: from the options given above, we will not be able to use specific endpoints. In particular, you can check what actions are avaliable in the [Contract.hs](https://github.com/input-output-hk/plutus/blob/master/plutus-contract/src/Plutus/Contract.hs) module if you look for `BlockchainActions`.
 
@@ -84,16 +84,97 @@ Wallet 9:
 Wallet 10:
     {, ""}: 100000000
 ```
-You can observe, at the top of the console output, the contract log message we wrote.
+You can observe, almost at the top of the console output, the contract log message we wrote. This is great! 
 
-## Throwing vs Caughting errors
-When executing a contract, as with any other piece of code, an error can happens. The behaviour of errors inside the contract monad is the expected one: the execution stops and an error message is shown in the console. To explore this a bit and to see the difference with the log message we used in our first example, let us add a line of code to it. The contract code is as follows:
+## Throwing vs Handling errors
+When executing a contract, as with any other piece of code, an error can happens. The behaviour of errors inside the contract monad is the expected one: the execution stops and an error message is shown in the console. To explore this a bit and to see the difference with the log message we just studied, let us add a line of code to the contract code which ends up as follows:
 ```haskell
 myContract1 :: Contract () BlockchainActions Text ()
 myContract1 = do
     void $ Contract.throwError "BOOM!"
     Contract.logInfo @String "Hello from the contract!"
 ```
+If we run again the test (do not forget to change the contract name from `myContract` to `myContract1` in the trace, or to define a new one along with a new test), we will be prompted with something like this:
+```
+Prelude Week04.Contract> test1
+Slot 00000: TxnValidate af5e6d25b5ecb26185289a03d50786b7ac4425b21849143ed7e18bcd70dc4db8
+Slot 00000: SlotAdd Slot 1
+Slot 00001: 00000000-0000-4000-8000-000000000000 {Contract instance for wallet 1}:
+  Contract instance started
+Slot 00001: *** CONTRACT STOPPED WITH ERROR: "\"BOOM!\""
+Slot 00001: SlotAdd Slot 2
+Final balances
+Wallet 1:
+    {, ""}: 100000000
+Wallet 2:
+    {, ""}: 100000000
+Wallet 3:
+    {, ""}: 100000000
+Wallet 4:
+    {, ""}: 100000000
+Wallet 5:
+    {, ""}: 100000000s 
+Wallet 6:
+    {, ""}: 100000000
+Wallet 7:
+    {, ""}: 100000000
+Wallet 8:
+    {, ""}: 100000000
+Wallet 9:
+    {, ""}: 100000000
+Wallet 10:
+    {, ""}: 100000000
+```
+Et voilà! You can see that now the execution process does not make it to the log message line, but it stops when we throw the error and it shows the error message we defined. Ok, this is great but wouldn't it be even greater if we could handle this errors? The fact is that we can.
+
+To do so we need to define a new contract. This contract's only function is to handle the error(s) and it does so by means of the `handleError` function, which is defined at [_Types.hs_](https://github.com/input-output-hk/plutus/blob/master/plutus-contract/src/Plutus/Contract/Types.hs) inside the plutus-contract package. This function type is
+```haskell
+handleError :: forall w s e e' a.
+  (e -> Contract w s e' a)
+  -> Contract w s e a
+  -> Contract w s e' a
+```
+We see that its first argument is a function that takes an error type and returns a new contract were the writer (w), schema (s) and computation result (a) types are the same but were the error type (e) might change by the error handler. The second argument is the contract whose error we want to take care of. Let us see an contract example that handles the error we throw in `myContract1`. The code reads as follows:
+```haskell
+myContract2 :: Contract () BlockchainActions Void ()
+myContract2 = Contract.handleError
+  (\err -> Contract.logError $ "Caught error: " ++ unpack err)
+  myContract1
+```
+We have chosen `Void` the error type of this second contract. As this data type has no inhabitant in Haskell, this means that this contract can not have any errors. We do this in order to show that the error from the first contract is indeed handled. As we can see, the function that handles the error just take this error and we unpack it to convert it to the `String` type (at this moment it is of type `Text`, as we declared it with the parameter `e` on `myContract1`). Then we append it to the string message and log it as an error to the console with `Contract.logError`. Finally, if we simmulate this contract using the trace as we have already learned, we are shown a message like the next one:
+```
+Prelude Week04.Contract> test2
+Slot 00000: TxnValidate af5e6d25b5ecb26185289a03d50786b7ac4425b21849143ed7e18bcd70dc4db8
+Slot 00000: SlotAdd Slot 1
+Slot 00001: 00000000-0000-4000-8000-000000000000 {Contract instance for wallet 1}:
+  Contract instance started
+Slot 00001: *** CONTRACT LOG: "Caught error: BOOM!"
+Slot 00001: 00000000-0000-4000-8000-000000000000 {Contract instance for wallet 1}:
+  Contract instance stopped (no errors)
+Slot 00001: SlotAdd Slot 2
+Final balances
+Wallet 1:
+    {, ""}: 100000000
+Wallet 2:
+    {, ""}: 100000000
+Wallet 3:
+    {, ""}: 100000000
+Wallet 4:
+    {, ""}: 100000000
+Wallet 5:
+    {, ""}: 100000000
+Wallet 6:
+    {, ""}: 100000000
+Wallet 7:
+    {, ""}: 100000000
+Wallet 8:
+    {, ""}: 100000000
+Wallet 9:
+    {, ""}: 100000000
+Wallet 10:
+    {, ""}: 100000000
+```
+where, as we see, the message is no longer an error but a log from the contract that informing us about the error. As the error data type of `myContract2` is of type `Void` we can be sure it was handled.
 
 ## The Schema parameter: s
 We can define a custom set of contract actions by adding this actions to the `BlockchainActions` type. For example, let us say we want to add and endpoint called 'foo'. We just need to give a pseudonym to the set of action data types like this:
@@ -122,7 +203,7 @@ myTrace = do
     h <- activateContractWallet (Wallet 1) myContract
     callEndpoint @"foo" h 42
 ```
-And finally we define the test funtion that runs this trace simmulation:
+And finally we define the test funtion that runs this trace:
 ```haskell
 test :: IO ()
 test = runEmulatorTraceIO myTrace
