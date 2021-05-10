@@ -5,7 +5,7 @@
 [Alberto Calzada - albertoCCz](https://github.com/albertoCCz)
 
 # The Contract Monad
-The porpouse of the Contract monad is to define off-chain code that runs in the wallet. It has four parameters:
+The purpose of the Contract monad is to define off-chain code that runs in the wallet. It has four parameters:
 ```haskell
 -- Contract w s e a
 ```
@@ -16,42 +16,41 @@ where:
 - e:  Describes the type of error messages.
 
 ### Simple example of Contract Monad
-In the next example we will just send a log message from the contract to the console, so we will be ignoring the `a` and `w` types.
+In the next example we will just send a log message from the contract to the console, so we will ignore the `a` and `w` types.
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications  #-}
--- ^ Add extensions on the top of the module file
-
+-- ^ Add extensions on top of the module file.
 myContract :: Contract () BlockchainActions Text ()
 myContract = Contract.logInfo @String "Hello from the contract!"
 ```
 As you can see, we have chosen `s` (which I believe stands for "schema") to be of type `BlockchainActions`. This data type contains the minimal set of actions for a contract: from the options given above, we will not be able to use specific endpoints. In particular, you can check what actions are available in the [Contract.hs](https://github.com/input-output-hk/plutus/blob/master/plutus-contract/src/Plutus/Contract.hs) module if you look for `BlockchainActions`.
 
-To use this contract you first need to define the trace, which substitutes what we previouly did on the Plutus Playground by providing with a list of actions the wallet(s) associated to the contract is going to perfom. The trace function we are going to use is the next one:
+To use this contract you first need to define the trace, which substitutes what we previously did on the Plutus Playground: instead of selecting actions in the fancy playground web app, you provide a number of actions, via the trace, that the wallet associated to the contract is going to take. The trace function we are going to use is the next one:
 ```haskell
 myTrace :: EmulatorTrace ()
 myTrace = void $ activateContractWallet (Wallet 1) myContract
 ```
-This function just activates a wallet or set of wallets (Wallet 1 in this case) by associating it with a contract (myContract in this case) and normally the result is saved in a handler that we can use later. Normally, the code would look like this:
+This function just activates a wallet or a set of wallets (Wallet 1 in this case) by associating it with a contract (myContract in this case) and normally the result is saved in a handler which we can use later. Normally, the code would look like this:
 ```haskell
 myTrace :: EmulatorTrace ()
 myTrace = h <- activateContractWallet (Wallet 1) myContract
 ```
-where `h` is the handler. Now, as we are just interested in showing the log message and we will not use the handler, we use the `void` keyword so the compiler does not complaint. Finally, after defining the trace, we can define one or more test(s) to study whether or not the contract works as expected. This time we only define one of these tests because, again, we are just interested in the log message. The test is:
+where `h` is the handler. Now, since we are only interested in showing the log message and not using the handler, we will use the `void` keyword so the compiler does not complain. Finally, after defining the trace, we can define one or more test(s) to study whether or not the contract works as expected. This time we only define one of these tests because, again, we are just interested in the log message. The test is:
 ```haskell
 myTest :: IO ()
 myTest = runEmulatorTraceIO myTrace
 ```
-Be aware of the `IO` at the end of the function `runEmulatorTraceIO`, as it also exists the funtion called `runEmulatorTrace`. The difference between them is that the first one, the one we are using in our example, shows a compact and nicely formatted message on the console when executing (also less information, though) while the second one shows pages and pages of data that needs to be processed to make it readable.
+Be aware of the `IO` at the end of the function `runEmulatorTraceIO`, as the function called `runEmulatorTrace` also exists. The difference between them is that the first one, the one we are using in our example, shows a compact and nicely formatted message on the console when executing (though also less informative) while the second one shows pages and pages of data that needs to be processed to make it readable.
 
 With all this, we are ready to try our first contract on the repl. To do this, I have found that the simplest way is to:
 1. Activate the `nix-shell` inside the plutus repo directory: `__@__:~/plutus$ nix-shell`
-2. Move to `plutus-pioneer-program/code/week04/` wherever you placed it.
+2. Move to `plutus-pioneer-program/code/week04/`
 3. Access the repl: `cabal repl`
-4. Load the _Contract.hs_ module inside source: `:l src/Week04/Contract.hs`
+4. Load the _Contract.hs_ module `:l src/Week04/Contract.hs`
 5. And executing the test: `myTest`
 
-You will be shown something like this:
+You will be shown something along the lines of:
 ```
 Prelude Week04.Contract> test1
 Slot 00000: TxnValidate af5e6d25b5ecb26185289a03d50786b7ac4425b21849143ed7e18bcd70dc4db8
@@ -87,14 +86,14 @@ Wallet 10:
 You can observe, almost at the top of the console output, the contract log message we wrote. This is great!
 
 ## Throwing vs Handling errors
-When executing a contract, as with any other piece of code, an error can happen. The behaviour of errors inside the contract monad is the expected one: the execution stops and an error message is shown in the console. To explore this a bit and to see the difference with the log message we just studied, let us add a line of code to the contract code which ends up as follows:
+When executing a contract, as with any other piece of code, an error can occur. The behaviour of errors inside the contract monad is the expected one: the execution stops and an error message is shown in the console. To explore this a bit and see the difference with the log message we just saw, let us add a line of code to the contract code as follows:
 ```haskell
 myContract1 :: Contract () BlockchainActions Text ()
 myContract1 = do
     void $ Contract.throwError "BOOM!"
     Contract.logInfo @String "Hello from the contract!"
 ```
-If we run again the test (do not forget to change the contract name from `myContract` to `myContract1` in the trace, or to define a new one along with a new test), we will be prompted with something like this:
+If we run the test again (do not forget to change the contract name from `myContract` to `myContract1` in the trace, or to define a new one along with a new test), we will be prompted with something like this:
 ```
 Prelude Week04.Contract> test1
 Slot 00000: TxnValidate af5e6d25b5ecb26185289a03d50786b7ac4425b21849143ed7e18bcd70dc4db8
@@ -125,7 +124,7 @@ Wallet 9:
 Wallet 10:
     {, ""}: 100000000
 ```
-Et voilà! You can see that now the execution process does not make it to the log message line, but it stops when we throw the error and it shows the error message we defined. Ok, this is great but wouldn't it be even greater if we could handle this errors? The fact is that we can.
+Et voilà! You can see that now the execution process does not make it to the log message line, but it stops when we throw the error and it shows the error message we defined. Ok, this is great but wouldn't it be even greater if we could handle these errors? The fact is that we can.
 
 To do so we need to define a new contract. This contract's only function is to handle the error(s) and it does so by means of the `handleError` function, which is defined at [Types.hs](https://github.com/input-output-hk/plutus/blob/master/plutus-contract/src/Plutus/Contract/Types.hs) inside the plutus-contract package. This function type is
 ```haskell
@@ -141,7 +140,7 @@ myContract2 = Contract.handleError
   (\err -> Contract.logError $ "Caught error: " ++ unpack err)
   myContract1
 ```
-We have chosen the `Void` error type of this second contract. As this data type has no inhabitant in Haskell, this means that this contract can not have any errors. We do this in order to show that the error from the first contract is indeed handled. As we can see, the function that handles the error just take this error and we unpack it to convert it to the `String` type (at this moment it is of type `Text`, as we declared it with the parameter `e` on `myContract1`). Then we append it to the string message and log it as an error to the console with `Contract.logError`. Finally, if we simulate this contract using the trace as we have already learned, we are shown a message like the next one:
+We have chosen the `Void` error type of this second contract. As this data type has no inhabitant in Haskell, this means that this contract can not have any errors. We do this in order to show that the error from the first contract is indeed handled. As we can see, the function that handles the error just takes this error and we unpack it to convert it to the `String` type (at this moment it is of type `Text`, as we declared it with the parameter `e` on `myContract1`). Then we append it to the string message and log it as an error to the console with `Contract.logError`. Finally, if we simulate this contract using the trace as we have already learned, we are shown a message like:
 ```
 Prelude Week04.Contract> test2
 Slot 00000: TxnValidate af5e6d25b5ecb26185289a03d50786b7ac4425b21849143ed7e18bcd70dc4db8
@@ -177,17 +176,16 @@ Wallet 10:
 where, as we see, the message is no longer an error but a log from the contract that informs us about the error. As the error data type of `myContract2` is of type `Void` we can be sure it was handled.
 
 ## The Schema parameter: s
-We can define a custom set of contract actions by adding this actions to the `BlockchainActions` type. For example, let us say we want to add and endpoint called 'foo'. We just need to give a pseudonym to the set of action data types like this:
+We can define a custom set of contract actions by adding these actions to the `BlockchainActions` type. For example, let us say we want to add an endpoint called 'foo'. We just need to give a pseudonym to the set of action data types:
 ```haskell
 {-# LANGUAGE DataKinds     #-}
 {-# LANGUAGE TypeOperators #-}
 -- ^ Add extensions on the top of the module file
-
 type MySchema = BlockchainActions .\/ Endpoint "foo" Int
 ```
-In the last line we define the type of the set of actions and we call it `MySchema`. Then we use the operator `.\/`, which acts on types, not on values, to "add" the endpoints that we want, in this case the `foo` endpoint. The first argument to `Endpoint` is a type level string which represents the name of the endpoint, and the second argument is the parameter type (which type of value this endpoint takes).
+In the last line we have defined the type of the set of actions and we have called it `MySchema`. Then we used the operator `.\/`, which acts on types, not on values, to "add" the endpoints that we want, in this case the `foo` endpoint. The first argument to `Endpoint` is a type level string which represents the name of the endpoint, and the second argument is the parameter type (which type of value this endpoint takes).
 
-Once we have define the endpoint we can take the action defined by it using the trace emulator. First, we define our contract:
+Once we have defined the endpoint, we can take the action defined by it using the trace emulator. First, we define our contract:
 ```haskell
 myContract :: Contract () MySchema Text ()
 myContract = do
@@ -201,14 +199,14 @@ myTrace = do
     h <- activateContractWallet (Wallet 1) myContract
     callEndpoint @"foo" h 42
 ```
-Note that now we are interested in calling the endpoint, for which it is necessary to use the handler. We do not use anymore the `Void $ activateCon...` but we reference the function ouput with some variable, `h` (for handler) in this case. Finally we define the test function that runs this trace:
+Note that now we are interested in calling the endpoint, for which it is necessary to use the handler. We do not use the `Void $ activateCon...` anymore, but we reference the function output with some variable, `h` (for handler) in this case. Finally we define the test function that runs this trace:
 ```haskell
 test :: IO ()
 test = runEmulatorTraceIO myTrace
 ```
 
 ## The Writer parameter: w
-This type parameter can not be of any type but it must be an instance of the type class `Monoid`. An example of data type which is an instance of this class is `List`. This parameter of the Contract monad is essential because it allows us to bring information back from the contract to the trace and also to the _PAB_, the Plutus Application Backend. We will be able to pass info back from the contract running in the wallet to the outside world. Let us see an example:
+This type parameter can not be of any type but an instance of the type class `Monoid`. An example of data type which is an instance of this class is `List`. This parameter of the Contract monad is essential because it allows us to bring information back from the contract to the trace and also to the _PAB_, the Plutus Application Backend. We will be able to pass info back from the contract running in the wallet to the outside world. Let us see an example:
 ```haskell
 myContract :: Contract [Int] BlockchainActions Text ()
 myContract = do
@@ -240,5 +238,4 @@ myTrace = do
 ```
 With this trace, we are just observing the state communicated by the contract after a number of Slots. In particular, we wait 5 Slots and observe the state using the `observableState` function, to which we pass the handler `h` of the contract associated with the wallet. Because the first communication made by the contract happens after Slot 10, we will get an empty* list on the console. Then we wait for another 10 Slots and ask again for the state. Now the contract has already communicated something, as we have passed Slot 15 and the communications happened on Slot 10. In particular, we will observe the list `[1]` on the console. I'll let you guess what happens when we take a look at the contract state for the third time.
 
-*_Quick note_: if you are asking how can it returns an emtpy list, just remember that we impossed that the Writer parameter type had to be an instance of the type class `Monoid`. This type class implements three functions, the first one being `mempty :: a` which just gives you the empty object of your data type instance. In this case, our data type instance is a `List`, so the empty object is `[]`. (Sorry for the terminology, as I am still far from being fluent in Haskell).
-
+*_Quick note_: if you are asking how can it return an empty list, just remember that we imposed that the Writer parameter type had to be an instance of the type class `Monoid`. This type class implements three functions, the first one being `mempty :: a` which just gives you the empty object of your data type instance. In this case, our data type instance is a `List`, so the empty object is `[]`. (Sorry for the terminology, as I am still far from being fluent in Haskell).
