@@ -69,7 +69,6 @@ mint = do
             void $ awaitTxConfirmed $ txId ledgerTx
             Contract.logInfo @String $ printf "forged %s" (show val)
 
-
 endpoints :: Contract () NFTSchema Text ()
 endpoints = mint' >> endpoints
   where
