@@ -38,21 +38,35 @@ so we see they are just wrappers around the `ByteString` type. We can also wrap 
 newtype AssetClass = AssetClass { unAssetClass :: (CurrencySymbol, TokenName) }
 -- ignoring deriving statements
 ```
-which is just a tuple of a `CurrencySymbol` and a `TokenName`. This `AssetClass` makes also possible to understand a `Value` as a map from `AssetClass` to an `Integer`. The integer value of a Value is the number of units a particular UTxO has of a specific `AssetClass`.
+which is just a tuple of a `CurrencySymbol` and a `TokenName`. This `AssetClass` also makes possible to understand a `Value` as a map from `AssetClass` to an `Integer`. The integer value of a Value is the number of units of a specific `AssetClass`.
 
-Now that we have seen the basic of Value types, let us play a bit in the repl to get an insight on some useful functions for Values. Again, as in the previous weeks, we can start the repl this way:
+Now that we have seen the basics of Value types, let us play a bit in the repl to get an insight on some useful functions to work with Values. Again, as in the previous weeks, we can start the repl this way:
 1. Activate the `nix-shell` inside the plutus repo directory: `__@__:~/plutus$ nix-shell`
-2. Move to `cd path/to/plutus-pioneer-program/code/week05/`
+2. Move to `plutus-pioneer-program/code/week05/`
 3. Access the repl with `cabal repl`, and then
 4. Import _Value.hs_ and _Ada.hs_: `import Plutus.V1.Ledger.Value` and `import Plutus.V1.Ledger.Ada`
-5. Activate the Overload string extension: `:set -XOverloadedStrings`, so we can enter `ByteString`s as literal strings.
+5. Activate the overload string extension: `:set -XOverloadedStrings`, so we can enter `ByteString`s as literal strings.
 
 Once we have done all this, we are ready to play!
 
-Before nothing, it would be interesting to explore the `Value` of Ada. There is a function in the _Ada.hs_ module called `adaSymbol`, which is of type `CurrencySymbol` that returns, unsurprisingly, the symbol of the ada token. If you run it into the repl you, you get an empty string:
+Before nothing, it would be interesting to explore the `Value` of Ada. There is a function in the _Ada.hs_ module called `adaSymbol`, which is of type `CurrencySymbol` that returns, unsurprisingly, the symbol of the ada token. If you run it into the repl,
 ```
 Prelude Plutus.V1.Ledger.Value Plutus.V1.Ledger.Ada> adaSymbol
 
 Prelude Plutus.V1.Ledger.Value Plutus.V1.Ledger.Ada>
 ```
-so the 
+you see that its symbol is just the empty ByteString. Wow, this is interesting. We will see its importance in a minute, but keep in mind that is something exclusive of the Ada. Let us see what its `TokenName` is by using the function `adaToken`, which is of type `TokenName`, of course.
+```
+Prelude Plutus.V1.Ledger.Value Plutus.V1.Ledger.Ada> adaToken
+""
+Prelude Plutus.V1.Ledger.Value Plutus.V1.Ledger.Ada>
+```
+Oh! Again the empty ByteString. Okey, so do we build an Ada `Value` from the map to map we talked before using the empty `ByteString`s or is there a better way? Well, there exists the function `lovelaceValueOf`, whose type is:
+```haskell
+lovelaceValueOf :: Integer -> Value
+```
+which allow us to do exactly this. On the repl:
+```
+Prelude Plutus.V1.Ledger.Value Plutus.V1.Ledger.Ada> lovelaceValueOf 100
+Value (Map [(,Map [("",100)])])
+```
