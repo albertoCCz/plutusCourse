@@ -39,3 +39,20 @@ newtype AssetClass = AssetClass { unAssetClass :: (CurrencySymbol, TokenName) }
 -- ignoring deriving statements
 ```
 which is just a tuple of a `CurrencySymbol` and a `TokenName`. This `AssetClass` makes also possible to understand a `Value` as a map from `AssetClass` to an `Integer`. The integer value of a Value is the number of units a particular UTxO has of a specific `AssetClass`.
+
+Now that we have seen the basic of Value types, let us play a bit in the repl to get an insight on some useful functions for Values. Again, as in the previous weeks, we can start the repl this way:
+1. Activate the `nix-shell` inside the plutus repo directory: `__@__:~/plutus$ nix-shell`
+2. Move to `cd path/to/plutus-pioneer-program/code/week05/`
+3. Access the repl with `cabal repl`, and then
+4. Import _Value.hs_ and _Ada.hs_: `import Plutus.V1.Ledger.Value` and `import Plutus.V1.Ledger.Ada`
+5. Activate the Overload string extension: `:set -XOverloadedStrings`, so we can enter `ByteString`s as literal strings.
+
+Once we have done all this, we are ready to play!
+
+Before nothing, it would be interesting to explore the `Value` of Ada. There is a function in the _Ada.hs_ module called `adaSymbol`, which is of type `CurrencySymbol` that returns, unsurprisingly, the symbol of the ada token. If you run it into the repl you, you get an empty string:
+```
+Prelude Plutus.V1.Ledger.Value Plutus.V1.Ledger.Ada> adaSymbol
+
+Prelude Plutus.V1.Ledger.Value Plutus.V1.Ledger.Ada>
+```
+so the 
