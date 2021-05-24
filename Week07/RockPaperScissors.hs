@@ -240,9 +240,9 @@ firstGame fp = do
 
             GameDatum _ (Just c')
                 | c == c' -> do
-                    logInfo @String "second player played and matched"
+                    logInfo @String "second player played and draw"
                     void $ mapError' $ runStep client $ Reveal (fpNonce fp) c
-                    logInfo @String "first player revealed and matched"
+                    logInfo @String "first player revealed and draw"
                 | c `beats` c' -> do
                     logInfo @String "second player played and lost"
                     void $ mapError' $ runStep client $ Reveal (fpNonce fp) c
@@ -285,7 +285,7 @@ secondGame sp = do
 
                 m' <- mapError' $ getOnChainState client
                 case m' of
-                    Nothing -> logInfo @String "first player won or matched"
+                    Nothing -> logInfo @String "first player won or draw"
                     Just _  -> do
                         logInfo @String "first player didn't reveal"
                         void $ mapError' $ runStep client ClaimSecond
