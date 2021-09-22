@@ -6,3 +6,8 @@ The repo is divided in weeks, as this is the structure of the Plutus Pioneer Pro
 - The HomeworkX-Done.md: Exercises of the week completed
 
 There is also a "papers" folder where you can find different material: IOHK's papers, Haskell reference books, etc.
+
+## Plutus First Class Photo
+We succesfully graduated!! :partying_face: :partying_face: :partying_face:
+
+![PlutusFirstClassPhoto](https://cloudflare-ipfs.com/ipfs/QmcKJbTgVS5qygLgjfRree941NXjn9V8KuRF7FcfM7xfWq/)
