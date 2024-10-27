@@ -8,6 +8,6 @@ The repo is divided in weeks, as this is the structure of the Plutus Pioneer Pro
 There is also a "papers" folder where you can find different material: IOHK's papers, Haskell reference books, etc.
 
 ## Plutus First Class Photo
-We succesfully graduated!! :partying_face: :partying_face: :partying_face:
+We succesfully graduated!! :fire: :fire: :fire:
 
 ![PlutusFirstClassPhoto](https://ipfs.io/ipfs/QmcKJbTgVS5qygLgjfRree941NXjn9V8KuRF7FcfM7xfWq/)
