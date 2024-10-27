@@ -10,4 +10,4 @@ There is also a "papers" folder where you can find different material: IOHK's pa
 ## Plutus First Class Photo
 We succesfully graduated!! :partying_face: :partying_face: :partying_face:
 
-![PlutusFirstClassPhoto](https://cloudflare-ipfs.com/ipfs/QmcKJbTgVS5qygLgjfRree941NXjn9V8KuRF7FcfM7xfWq/)
+![PlutusFirstClassPhoto](https://ipfs.io/ipfs/QmcKJbTgVS5qygLgjfRree941NXjn9V8KuRF7FcfM7xfWq/)
